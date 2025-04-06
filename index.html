@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能体检推荐系统</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 添加必要的样式 */
+        .hidden {
+            display: none;
+        }
+        #recommendations {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .section-title {
+            margin-top: 30px;
+            color: #333;
+        }
+        .section-subtitle {
+            margin-top: 20px;
+            color: #666;
+        }
+        .note {
+            color: #666;
+            font-style: italic;
+        }
+        /* 基本样式 */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>成人体检项目智能推荐系统</h1>
+            <p class="subtitle">基于个人信息和风险评估，为您提供个性化体检项目推荐</p>
+        </header>
+        
+        <div class="content">
+            <div class="instructions">
+                <h2>填写说明</h2>
+                <p>请根据您的实际情况填写以下问卷，系统将根据您的回答生成个性化体检推荐方案。</p>
+                <p>带<span class="required">*</span>的为必填项，其他项为可选，但填写越完整，推荐越准确。</p>
+            </div>
+            
+            <div id="questionnaire" class="questionnaire-container">
+                <!-- 问卷内容将由JavaScript动态生成 -->
+            </div>
+            
+            <div id="recommendations" class="hidden">
+                <div class="result-header">
+                    <h2>您的个性化体检方案</h2>
+                    <p>根据您提供的信息，我们为您定制了以下体检项目：</p>
+                </div>
+                
+                <!-- 推荐结果将由JavaScript动态生成 -->
+                
+                <div class="actions">
+                    <button id="print-results" class="action-button print-button" onclick="window.print()">打印方案</button>
+                    <button id="restart" class="action-button restart-button" onclick="restartForm()">重新填写</button>
+                </div>
+                
+                <div class="disclaimer">
+                    <p><strong>免责声明：</strong>本推荐方案基于您提供的信息和医学筛查指南生成，仅供参考，不构成医疗建议。具体检查项目请咨询医生，并根据医生建议进行选择。</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2025 智能体检推荐系统 | 本系统基于临床体检指南开发</p>
+        </footer>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>

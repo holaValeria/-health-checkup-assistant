@@ -1,0 +1,101 @@
+{
+  "base_items": ["身高体重BMI", "血压", "血常规", "尿常规", "肝肾功能", "血脂四项", "空腹血糖"],
+  "age_groups": {
+    "18-29": {
+      "additions": ["视力检查"]
+    },
+    "30-39": {
+      "additions": ["腹部超声", "心电图", {
+        "condition": "甲状腺疾病家族史或BMI≥24",
+        "tests": ["甲状腺功能", "甲状腺抗体"]
+      }]
+    },
+    "40-49": {
+      "additions": [
+        "胃镜检查",
+        {
+          "condition": "男性",
+          "tests": ["PSA检测"]
+        },
+        {
+          "condition": "女性",
+          "tests": ["乳腺超声", "宫颈TCT", {
+            "condition": "HPV未接种",
+            "tests": ["HPV检测"]
+          }]
+        },
+        "骨密度筛查",
+        {
+          "condition": "高血压或糖尿病",
+          "tests": ["眼底检查"]
+        }
+      ]
+    },
+    "50-59": {
+      "additions": [
+        "结肠镜检查",
+        {
+          "condition": "男性",
+          "tests": ["前列腺超声"]
+        },
+        {
+          "condition": "女性",
+          "tests": ["乳腺钼靶"]
+        },
+        "颈动脉超声",
+        {
+          "condition": "空腹血糖5.6-6.9 mmol/L或BMI≥25",
+          "tests": ["糖化血红蛋白"]
+        }
+      ]
+    },
+    "60+": {
+      "additions": [
+        "心脏超声",
+        "听力检查",
+        "认知功能评估",
+        {
+          "condition": "吸烟或有呼吸系统症状",
+          "tests": ["肺功能检查"]
+        },
+        {
+          "condition": "认知功能异常/卒中史/高血压III级",
+          "tests": ["脑部MRI"]
+        }
+      ]
+    }
+  },
+  "risk_scoring": {
+    "cardiovascular": [
+      {"factor": "年龄≥50", "score": 1},
+      {"factor": "吸烟", "score": 2},
+      {"factor": "腰围超标（男≥90cm/女≥85cm）", "score": 2},
+      {"factor": "慢性肾病（eGFR<60）", "score": 3}
+    ],
+    "tumor": [
+      {"factor": "吸烟≥10年", "score": 3},
+      {"factor": "长期饮酒", "score": 2},
+      {"factor": "职业暴露", "score": 2},
+      {"factor": "相关症状（血便/进行性吞咽困难）", "score": 3}
+    ]
+  },
+  "symptom_triggers": [
+    {
+      "symptom": "持续咳嗽",
+      "steps": [
+        "胸部X线片",
+        {"condition": "前期检查阴性", "test": "低剂量螺旋CT"}
+      ]
+    }
+  ],
+  "special_populations": [
+    {
+      "group": "计划妊娠女性",
+      "tests": ["甲状腺功能", "叶酸", "维生素D检测"]
+    },
+    {
+      "group": "口服避孕药",
+      "tests": ["凝血因子V Leiden突变筛查"]
+    }
+  ]
+}
