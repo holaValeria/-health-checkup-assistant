@@ -1284,22 +1284,24 @@ function generateRecommendation() {
   let additionalItems = [];
   let cardioRiskScore = 0;
   let tumorRiskScore = 0;
-  let cardioItems = [];
-  let tumorItems = [];
+
+  // 获取用户年龄和性别
+  const age = parseInt(userAnswers.age);
+  const gender = userAnswers.gender;
 
   // 计算心血管风险评分
   decisionTreeData.risk_scoring.cardiovascular.forEach(factor => {
     if (
-      (factor.factor === "年龄≥50" && parseInt(userAnswers.age) >= 50) ||
-      (factor.factor === "男性或绝经后女性" && (userAnswers.gender === '男性' || (userAnswers.gender === '女性' && userAnswers.menstruation === '已绝经'))) ||
+      (factor.factor === "年龄≥50" && age >= 50) ||
+      (factor.factor === "男性或绝经后女性" && (gender === '男性' || (gender === '女性' && userAnswers.menstruation === '已绝经'))) ||
       (factor.factor === "吸烟" && userAnswers.smoking === '目前吸烟') ||
       (factor.factor === "高血压" && userAnswers.chronicDiseases && userAnswers.chronicDiseases.includes('高血压')) ||
       (factor.factor === "糖尿病" && userAnswers.chronicDiseases && userAnswers.chronicDiseases.includes('糖尿病')) ||
       (factor.factor === "血脂异常" && userAnswers.chronicDiseases && userAnswers.chronicDiseases.includes('血脂异常')) ||
       (factor.factor === "BMI≥28" && parseFloat(userAnswers.bmi) >= 28) ||
       (factor.factor === "腰围超标（男≥90cm/女≥85cm）" && 
-        ((userAnswers.gender === '男性' && parseFloat(userAnswers.waist) >= 90) ||
-         (userAnswers.gender === '女性' && parseFloat(userAnswers.waist) >= 85))) ||
+        ((gender === '男性' && parseFloat(userAnswers.waist) >= 90) ||
+         (gender === '女性' && parseFloat(userAnswers.waist) >= 85))) ||
       (factor.factor === "家族心血管病史" && userAnswers.familyHistory && 
         userAnswers.familyHistory.includes('心血管疾病(心脏病、中风等)')) ||
       (factor.factor === "缺乏运动" && userAnswers.exercise === '缺乏运动(几乎不运动)') ||
@@ -1313,7 +1315,7 @@ function generateRecommendation() {
   // 计算肿瘤风险评分
   decisionTreeData.risk_scoring.tumor.forEach(factor => {
     if (
-      (factor.factor === "年龄≥50岁" && parseInt(userAnswers.age) >= 50) ||
+      (factor.factor === "年龄≥50岁" && age >= 50) ||
       (factor.factor === "吸烟≥10年" && userAnswers.smoking === '目前吸烟' && 
         parseInt(userAnswers.smokingYears) >= 10) ||
       (factor.factor === "长期饮酒" && userAnswers.drinking === '经常饮酒(每周1次或以上)') ||
@@ -1337,234 +1339,32 @@ function generateRecommendation() {
     }
   });
 
-  // 根据风险评分添加检查项目
-  if (cardioRiskScore > 5) {
-    cardioItems = [
-      "动态血压监测",
-      "心脏超声",
-      "颈动脉超声",
-      "运动负荷试验"
-    ];
-  } else if (cardioRiskScore > 2) {
-    cardioItems = [
-      "动态血压监测",
-      "心脏超声"
-    ];
+  // 关联检查项目
+  // 50岁以上男性关联前列腺 PSA 筛查
+  if (age >= 50 && gender === '男性') {
+    additionalItems.push("前列腺 PSA 筛查");
   }
 
-  if (tumorRiskScore > 5) {
-    tumorItems = [
-      "全身肿瘤标志物筛查",
-      "全身PET-CT(如有条件)"
-    ];
-  } else if (tumorRiskScore > 2) {
-    tumorItems = [
-      "相关部位肿瘤标志物筛查"
-    ];
+  // 40岁以上女性关联乳腺钼靶
+  if (age >= 40 && gender === '女性') {
+    additionalItems.push("乳腺钼靶");
   }
 
-  // 根据年龄添加项目
-  const ageGroup = userAnswers.age.replace(/[^0-9\-\+]/g, ''); // 提取年龄数字部分
-  if (decisionTreeData.age_groups[ageGroup]) {
-    const ageAdditions = decisionTreeData.age_groups[ageGroup].additions;
-    
-    // 处理年龄相关推荐
-    // ...现有代码...
+  // 乳腺钼靶的推荐逻辑
+  const breastCheckOptions = userAnswers['乳腺相关检查'] || [];
+  if (breastCheckOptions.includes('乳腺钼靶')) {
+    additionalItems.push("乳腺钼靶");
   }
-  
-  // 处理特殊条件
-  decisionTreeData.special_conditions.forEach(condition => {
-    if (condition.condition === "高度近视（600度以上）" && 
-        userAnswers.highMyopia === '是') {
-      additionalItems = additionalItems.concat(condition.tests);
-    } else if (condition.condition === "高血压患者" && 
-               userAnswers.chronicDiseases && 
-               userAnswers.chronicDiseases.includes('高血压')) {
-      additionalItems = additionalItems.concat(condition.tests);
-    } else if (condition.condition === "糖尿病患者" && 
-               userAnswers.chronicDiseases && 
-               userAnswers.chronicDiseases.includes('糖尿病')) {
-      additionalItems = additionalItems.concat(condition.tests);
-    } else if (condition.condition === "BMI≥28" && 
-               userAnswers.bmi && 
-               parseFloat(userAnswers.bmi) >= 28) {
-      additionalItems = additionalItems.concat(condition.tests);
-    } else if (condition.condition === "血压波动明显" && 
-               userAnswers.bloodPressureVariation === '是') {
-      additionalItems = additionalItems.concat(condition.tests);
-    }
-  });
-  
-  // 处理症状触发的检查
-  if (userAnswers.respiratorySymptoms && 
-      userAnswers.respiratorySymptoms.includes('持续咳嗽') &&
-      userAnswers.coughDuration && 
-      ['2周至3个月', '超过3个月'].includes(userAnswers.coughDuration)) {
-    
-    const trigger = decisionTreeData.symptom_triggers.find(t => t.symptom === "持续咳嗽>2周");
-    if (trigger && Array.isArray(trigger.steps)) {
-      additionalItems = additionalItems.concat(trigger.steps.filter(step => typeof step === 'string'));
-      
-      // 如果已经做过X线且结果正常，添加下一步
-      if (userAnswers.otherExamHistory && 
-          userAnswers.otherExamHistory.includes('胸部X线片') &&
-          userAnswers.chestXrayResult === '正常') {
-        
-        const conditionalStep = trigger.steps.find(step => typeof step === 'object');
-        if (conditionalStep && conditionalStep.test) {
-          additionalItems.push(conditionalStep.test);
-        }
-      }
-    }
-  }
-  
-  if (userAnswers.digestiveSymptoms && 
-      !userAnswers.digestiveSymptoms.includes('以上都没有')) {
-    
-    const trigger = decisionTreeData.symptom_triggers.find(t => t.symptom === "消化道症状");
-    if (trigger && Array.isArray(trigger.tests)) {
-      additionalItems = additionalItems.concat(trigger.tests);
-    }
-  }
-  
-  if (userAnswers.urinarySymptoms && 
-      !userAnswers.urinarySymptoms.includes('以上都没有')) {
-    
-    const trigger = decisionTreeData.symptom_triggers.find(t => t.symptom === "尿路症状");
-    if (trigger && Array.isArray(trigger.tests)) {
-      additionalItems = additionalItems.concat(trigger.tests);
-    }
-  }
-  
-  if (userAnswers.gender === '男性' && 
-      userAnswers.prostateSymptons && 
-      !userAnswers.prostateSymptons.includes('以上都没有')) {
-    
-    const trigger = decisionTreeData.symptom_triggers.find(t => t.symptom === "前列腺症状");
-    if (trigger && Array.isArray(trigger.tests)) {
-      additionalItems = additionalItems.concat(trigger.tests);
-    }
-  }
-  
-  // 处理特殊人群
-  decisionTreeData.special_populations.forEach(population => {
-    if (population.group === '计划妊娠女性' && 
-        userAnswers.gender === '女性' && 
-        userAnswers.pregnancy === '是') {
-      additionalItems = additionalItems.concat(population.tests);
-    } else if (population.group === '口服避孕药' && 
-              userAnswers.gender === '女性' && 
-              userAnswers.contraception === '口服避孕药') {
-      
-      // 判断是否为高风险
-      const highRisk = userAnswers.oralContraceptiveRisk && 
-                      (userAnswers.oralContraceptiveRisk.includes('35岁以上') || 
-                       userAnswers.oralContraceptiveRisk.includes('吸烟') ||
-                       userAnswers.oralContraceptiveRisk.includes('高血压') ||
-                       userAnswers.oralContraceptiveRisk.includes('血栓病史') ||
-                       userAnswers.oralContraceptiveRisk.includes('血栓家族史'));
-      
-      additionalItems = additionalItems.concat(population.tests);
-      if (highRisk) {
-        additionalItems.push("凝血因子V Leiden突变筛查");
-      }
-    } else if (population.group === '男性BMI≥25且有疲劳症状' && 
-              userAnswers.gender === '男性' && 
-              userAnswers.bmi && parseFloat(userAnswers.bmi) >= 25 &&
-              userAnswers.maleObesityFatigue === '是') {
-      additionalItems = additionalItems.concat(population.tests);
-    } else if (population.group === '职业粉尘暴露' && 
-              userAnswers.occupation && 
-              userAnswers.occupation.includes('粉尘(如煤矿、建筑、纺织等行业)')) {
-      additionalItems = additionalItems.concat(population.tests);
-    } else if (population.group === '慢性肝病' && 
-              userAnswers.chronicDiseases && 
-              (userAnswers.chronicDiseases.includes('慢性肝病') || 
-               userAnswers.chronicDiseases.includes('乙肝病毒感染'))) {
-      additionalItems = additionalItems.concat(population.tests);
-    } else if (population.group === '慢性病管理需要' && 
-              userAnswers.chronicDiseaseManagement && 
-              !userAnswers.chronicDiseaseManagement.includes('以上都没有') &&
-              !userAnswers.chronicDiseaseManagement.includes('不适用')) {
-      additionalItems = additionalItems.concat(population.tests);
-    }
-  });
-  
-  // 处理筛查偏好
-  if (userAnswers.colonScreeningPreference === '直接做结肠镜检查(创伤性但一次性检查更彻底)') {
-    additionalItems = additionalItems.concat(decisionTreeData.screening_preferences.colonoscopy_direct);
-  } else if (userAnswers.colonScreeningPreference === '先做无创的FIT-DNA检测，阳性再做结肠镜(分步骤筛查)') {
-    additionalItems = additionalItems.concat(decisionTreeData.screening_preferences.colonoscopy_step);
-  }
-  
-  // 处理乳腺密度
-  if (userAnswers.gender === '女性' && 
-      userAnswers.breastDensity && 
-      ['不均匀致密型', '极度致密型'].includes(userAnswers.breastDensity)) {
-    additionalItems = additionalItems.concat(decisionTreeData.screening_preferences.breast_high_density);
-  }
-  
-  // 处理疫苗接种状态
-  if (userAnswers.hepBVaccination === '是，但未完成全程接种' || 
-      userAnswers.hepBVaccination === '否' || 
-      userAnswers.hepBVaccination === '不清楚') {
-    additionalItems = additionalItems.concat(decisionTreeData.vaccination_status.hepB_incomplete);
-  } else if (userAnswers.hepBVaccination === '是，已完成全程接种，但时间超过10年') {
-    additionalItems = additionalItems.concat(decisionTreeData.vaccination_status.hepB_over10years);
-  }
-  
-  // 合并所有推荐项目并去重
-  const allItems = [...baseItems];
-  const addedItems = [...new Set([...additionalItems, ...cardioItems, ...tumorItems])];
-  
-  // 计算抑郁和焦虑评分
-  const scoreMap = {
-    '完全不会': 0,
-    '几天': 1,
-    '一半以上天数': 2,
-    '几乎每天': 3,
-    '无': 0,
-    '轻度': 1,
-    '中度': 2,
-    '重度': 3,
-    '偶尔': 1,
-    '经常': 2,
-    '持续': 3
-  };
 
-  let depressionScore = 0;
-  let anxietyScore = 0;
-
-  // 计算抑郁分数
-  ['depression1', 'depression2', 'depression3', 'depression4'].forEach(id => {
-    const answer = userAnswers[id];
-    if (answer && scoreMap[answer] !== undefined) {
-      depressionScore += scoreMap[answer];
-    }
-  });
-
-  // 计算焦虑分数
-  ['anxiety1', 'anxiety2', 'anxiety3'].forEach(id => {
-    const answer = userAnswers[id];
-    if (answer && scoreMap[answer] !== undefined) {
-      anxietyScore += scoreMap[answer];
-    }
-  });
-
-  // 根据评分添加心理健康建议
-  if (depressionScore >= decisionTreeData.mental_health.depression.threshold) {
-    additionalItems = additionalItems.concat(decisionTreeData.mental_health.depression.recommendations);
-  }
-  if (anxietyScore >= decisionTreeData.mental_health.anxiety.threshold) {
-    additionalItems = additionalItems.concat(decisionTreeData.mental_health.anxiety.recommendations);
-  }
-  
   // 将结果展示到页面
-  displayResults(baseItems, addedItems, cardioRiskScore, tumorRiskScore, depressionScore, anxietyScore);
+  displayResults(baseItems, additionalItems, cardioRiskScore, tumorRiskScore);
+
+  console.log(`用户年龄: ${age}, 性别: ${gender}`);
+  console.log(`推荐项目: ${additionalItems}`);
 }
 
 // 显示结果 - 增强版
-function displayResults(baseItems, addedItems, cardioRiskScore, tumorRiskScore, depressionScore, anxietyScore) {
+function displayResults(baseItems, addedItems, cardioRiskScore, tumorRiskScore) {
   try {
     console.log("显示结果...");
     
@@ -1611,12 +1411,6 @@ function displayResults(baseItems, addedItems, cardioRiskScore, tumorRiskScore, 
         <h3>健康风险评估</h3>
         <p><strong>心血管疾病风险：</strong> ${getRiskLevel(cardioRiskScore, 9)}</p>
         <p><strong>肿瘤筛查风险：</strong> ${getRiskLevel(tumorRiskScore, 7)}</p>
-      </div>
-      
-      <div class="mental-health-assessment">
-        <h3>心理健康评估</h3>
-        <p><strong>抑郁风险评估：</strong> ${getMentalHealthRiskLevel(depressionScore, 6, '抑郁')} (总分：${depressionScore}/12)</p>
-        <p><strong>焦虑风险评估：</strong> ${getMentalHealthRiskLevel(anxietyScore, 5, '焦虑')} (总分：${anxietyScore}/9)</p>
       </div>
       
       <div class="recommendation-package">
@@ -1727,15 +1521,6 @@ function getRiskLevel(score, highThreshold) {
     return `<span style="color: orange;">中度风险 (${score}分)</span>`;
   } else {
     return `<span style="color: red;">高风险 (${score}分)</span>`;
-  }
-}
-
-// 添加心理健康风险等级评估函数
-function getMentalHealthRiskLevel(score, threshold, type) {
-  if (score < threshold) {
-    return `<span style="color: green;">正常范围</span>`;
-  } else {
-    return `<span style="color: red;">建议就医评估（${type}倾向）</span>`;
   }
 }
 
